@@ -2,15 +2,15 @@ package com.syjgin.sipreader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,8 +24,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.nostra13.universalimageloader.cache.memory.impl.LruMemoryCache;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
@@ -39,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends AppCompatActivity {
 
     private static final String MAIN_URL = "http://sputnikipogrom.com/";
     private static final String COMPASS_RUSSIA = "http://sputnikipogrom.com/go/russia/";
@@ -69,12 +71,13 @@ public class MainActivity extends ActionBarActivity {
     private PopulateImagesList mCurrentTask;
     private ListView mArticlesListView;
     private Toolbar mToolbar;
+    private SharedPreferences mPrefs;
+    private ProgressBar mProgressbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-            //TODO: change displayImageOptions
             ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).memoryCache(new LruMemoryCache(2 * 1024 * 1024))
                     .memoryCacheSize(2 * 1024 * 1024).diskCacheSize(50 * 1024 * 1024)
                     .diskCacheFileCount(100).build();
@@ -87,6 +90,10 @@ public class MainActivity extends ActionBarActivity {
             mSwipeRefreshLayout.setOnRefreshListener(new RefreshListener());
             mIsFirstTimeRefresh = true;
             mIsLoadingInProgress = false;
+
+            mProgressbar = (ProgressBar) findViewById(R.id.progressBar);
+
+            mPrefs = getPreferences(MODE_PRIVATE);
 
             mToolbar = (Toolbar) findViewById(R.id.toolbar); // Attaching the layout to the toolbar object
             setSupportActionBar(mToolbar);
@@ -137,33 +144,22 @@ public class MainActivity extends ActionBarActivity {
             boolean isConnected = activeNetwork != null &&
                     activeNetwork.isConnectedOrConnecting();
             if(!isConnected) {
-                /*boolean imagesLinksExistsInCache = false;
-                try {
-                    imagesLinksExistsInCache = Reservoir.contains(IMAGES_LINKS);
-                } catch (Exception e) {};
-                boolean linksExistsInCache = false;
-                try {
-                    linksExistsInCache = Reservoir.contains(URL_LINKS);
-                } catch (Exception e) {};
-                if(imagesLinksExistsInCache && linksExistsInCache) {
-                    mSwipeRefreshLayout.setRefreshing(true);
-                    ArrayList<String> imagesList = null;
-                    ArrayList<String> urlLinks = null;
-                    try {
-                        imagesList = Reservoir.get(IMAGES_LINKS,ArrayList.class);
-                    } catch (Exception e) {
-                        Log.d("TAG", "fail");
-                    }
-                    try {
-                        urlLinks = Reservoir.get(URL_LINKS,ArrayList.class);
-                    } catch (Exception e) {
-                        Log.d("TAG", "fail");
-                    }
-                    loadImages(imagesList, urlLinks);
+                mProgressbar.setVisibility(View.INVISIBLE);
+                Gson gson = new Gson();
+
+                String imagesLinksJson = mPrefs.getString(IMAGES_LINKS, "");
+                ArrayList imagesLinks = gson.fromJson(imagesLinksJson, ArrayList.class);
+
+                String linksJson = mPrefs.getString(URL_LINKS, "");
+                ArrayList urlLinks = gson.fromJson(linksJson, ArrayList.class);
+
+                if(imagesLinks != null && urlLinks != null) {
+                    loadImages(imagesLinks, urlLinks);
                 } else {
                     Toast toast = Toast.makeText(getApplicationContext(), getString(R.string.no_connection), Toast.LENGTH_LONG);
                     toast.show();
-                }*/
+                }
+
             } else {
                 mCurrentTask = new PopulateImagesList();
                 mCurrentTask.execute(mCurrentUrl);
@@ -259,6 +255,9 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         public void onClick(View view) {
+            if(this.currentId.equals(getString(R.string.main))) {
+                loadByCompass(MAIN_URL);
+            }
             if(this.currentId.equals(getString(R.string.russia))) {
                 loadByCompass(COMPASS_RUSSIA);
             }
@@ -294,7 +293,6 @@ public class MainActivity extends ActionBarActivity {
 
     private class PopulateImagesList extends AsyncTask <String, Void, Void>
     {
-        private ProgressBar progressBar;
         private ArrayList<String> imageLinks;
         private ArrayList<String> links;
         private String url;
@@ -333,9 +331,8 @@ public class MainActivity extends ActionBarActivity {
             super.onPreExecute();
             mIsLoadingInProgress = true;
             try {
-                progressBar = (ProgressBar) findViewById(R.id.progressBar);
                 if(mIsFirstTimeRefresh) {
-                    progressBar.setVisibility(View.VISIBLE);
+                    mProgressbar.setVisibility(View.VISIBLE);
                     mIsFirstTimeRefresh = false;
                 }
                 mSwipeRefreshLayout.setRefreshing(true);
@@ -347,18 +344,29 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-            progressBar.setVisibility(View.INVISIBLE);
+            mProgressbar.setVisibility(View.INVISIBLE);
             loadImages(imageLinks, links);
-            /*Reservoir.putAsync(IMAGES_LINKS, imageLinks);
-            Reservoir.putAsync(URL_LINKS, links);*/
+
+            SharedPreferences.Editor prefsEditor = mPrefs.edit();
+            Gson gson = new Gson();
+            String imagesLinksJson = gson.toJson(imageLinks);
+            prefsEditor.putString(IMAGES_LINKS, imagesLinksJson);
+            String linksJson = gson.toJson(links);
+            prefsEditor.putString(URL_LINKS, linksJson);
+            prefsEditor.commit();
+
             mIsLoadingInProgress = false;
         }
     }
 
-    private void loadImages(ArrayList<String> imageLinks, ArrayList<String> links) {
+    private void loadImages(ArrayList imageLinks, ArrayList links) {
         try {
-            if(imageLinks != null) {
-                articlesAdapter.addData(links, imageLinks);
+            @SuppressWarnings("unchecked")
+            ArrayList<String> convertedImg = (ArrayList<String>)imageLinks;
+            @SuppressWarnings("unchecked")
+            ArrayList<String> convertedLinks = (ArrayList<String>)links;
+            if(convertedImg != null) {
+                articlesAdapter.addData(convertedLinks, convertedImg);
 
             } else {
 
@@ -414,7 +422,11 @@ public class MainActivity extends ActionBarActivity {
             } else {
                 viewHolder = (ViewHolder)convertView.getTag();
             }
-            ImageLoader.getInstance().displayImage(imageLinks.get(position), viewHolder.imageView);
+            DisplayImageOptions options = new DisplayImageOptions.Builder()
+                    .cacheInMemory(true)
+                    .cacheOnDisk(true)
+                    .build();
+            ImageLoader.getInstance().displayImage(imageLinks.get(position), viewHolder.imageView, options);
             viewHolder.imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

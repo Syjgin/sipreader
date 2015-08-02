@@ -10,6 +10,7 @@
     <string name="no_connection">No connection. Please enable Wifi or mobile networking</string>
     <string name="connection_error">Document reading error. Please try again later</string>
     <string name="compass">Compass</string>
+    <string name="main">Main page</string>
     <string name="russia">Russia</string>
     <string name="novorossia">Novorossia</string>
     <string name="minorrussia">Minor Russia</string>
@@ -21,6 +22,7 @@
     <string name="greatermiddleeast">Greater Middle East</string>
     <string name="world">Rest of the world</string>
     <string-array name="compass_array">
+        <item>@string/main</item>
         <item>@string/russia</item>
         <item>@string/novorossia</item>
         <item>@string/minorrussia</item>
