@@ -44,21 +44,15 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final String MAIN_URL = "http://sputnikipogrom.com/";
-    private static final String COMPASS_RUSSIA = "http://sputnikipogrom.com/go/russia/";
-    private static final String COMPASS_NOVOROSSIA = "http://sputnikipogrom.com/go/russia/novorossiya/";
-    private static final String COMPASS_MINOR = "http://sputnikipogrom.com/go/russia/ua/";
-    private static final String COMPASS_WEST = "http://sputnikipogrom.com/go/russia/west/";
-    private static final String COMPASS_NEAR = "http://sputnikipogrom.com/go/empire/";
-    private static final String COMPASS_EUROPE = "http://sputnikipogrom.com/go/europe/";
-    private static final String COMPASS_USA = "http://sputnikipogrom.com/go/usa/";
-    private static final String COMPASS_ASIA = "http://sputnikipogrom.com/go/asia/";
-    private static final String COMPASS_MIDDLEEAST = "http://sputnikipogrom.com/go/greatermiddleeast/";
-    private static final String COMPASS_WORLD = "http://sputnikipogrom.com/go/world/";
 
     private static final String PAGE_URL = "page/";
     private final float FADE_DEGREE = 0.35f;
+
     private final String IMAGES_LINKS = "imagesLinks";
     private final String URL_LINKS = "urlLinks";
+
+    private final String MENU_LINKS = "menuLinks";
+    private final String MENU_HEADERS = "menuHeaders";
 
     private int mCurrentPage;
     private String mCurrentUrl;
@@ -73,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private Toolbar mToolbar;
     private SharedPreferences mPrefs;
     private ProgressBar mProgressbar;
+    private boolean isMainMenuCreated;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
+            isMainMenuCreated =false;
 
             mSlider = new SlidingMenu(this);
             mSlider.setMode(SlidingMenu.LEFT);
@@ -114,15 +110,6 @@ public class MainActivity extends AppCompatActivity {
             mSlider.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
             mSlider.setMenu(R.layout.sidemenu);
             mSlider.setBehindWidthRes(R.dimen.slidingmenu_behind_width);
-            String values[] = getResources().getStringArray(R.array.compass_array);
-            ArrayList<String> list = new ArrayList<>(values.length);
-            for(int i = 0; i < values.length; i++) {
-                list.add(i, values[i]);
-            }
-            CompassSelectAdapter listValues = new CompassSelectAdapter(this, R.layout.sidemenu_item, list);
-
-            ListView listView = ((ListView) findViewById(R.id.sidemenu));
-            listView.setAdapter(listValues);
 
             articlesAdapter = new ArticlesAdapter(getApplicationContext(), R.layout.articles_list_item, new String[0]);
             mArticlesListView = (ListView)findViewById(R.id.articlesList);
@@ -153,6 +140,14 @@ public class MainActivity extends AppCompatActivity {
                 String linksJson = mPrefs.getString(URL_LINKS, "");
                 ArrayList urlLinks = gson.fromJson(linksJson, ArrayList.class);
 
+                String menuLinksJson = mPrefs.getString(MENU_LINKS, "");
+                ArrayList menuLinks = gson.fromJson(menuLinksJson, ArrayList.class);
+
+                String menuHeadersJson = mPrefs.getString(MENU_HEADERS, "");
+                ArrayList menuHeaders = gson.fromJson(menuHeadersJson, ArrayList.class);
+
+                createMainMenu(menuHeaders, menuLinks);
+
                 if(imagesLinks != null && urlLinks != null) {
                     loadImages(imagesLinks, urlLinks);
                 } else {
@@ -169,6 +164,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void createMainMenu(List<String> headers, ArrayList<String> urls) {
+        if(isMainMenuCreated)
+            return;
+        isMainMenuCreated = true;
+        CompassSelectAdapter listValues = new CompassSelectAdapter(this, R.layout.sidemenu_item, headers, urls);
+
+        ListView listView = ((ListView) findViewById(R.id.sidemenu));
+        listView.setAdapter(listValues);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -209,8 +213,11 @@ public class MainActivity extends AppCompatActivity {
 
     private class CompassSelectAdapter extends ArrayAdapter<String> {
 
-        public CompassSelectAdapter(Context context, int resource, List<String> objects) {
+        private ArrayList<String> urls;
+
+        public CompassSelectAdapter(Context context, int resource, List<String> objects, ArrayList<String> urls) {
             super(context, resource, objects);
+            this.urls = urls;
         }
 
         @Override
@@ -226,17 +233,17 @@ public class MainActivity extends AppCompatActivity {
             TextView tv = (TextView) row.findViewById(R.id.text);
 
             tv.setText(getItem(position));
-            tv.setOnClickListener(new CompassSelectListener(getItem(position)));
+            tv.setOnClickListener(new CompassSelectListener(urls.get(position)));
             return row;
         }
     }
 
     private class CompassSelectListener implements View.OnClickListener {
 
-        private String currentId;
+        private String currentUrl;
 
-        public CompassSelectListener(String id) {
-            currentId = id;
+        public CompassSelectListener(String url) {
+            currentUrl = url;
         }
 
         private void loadByCompass(String url) {
@@ -255,39 +262,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View view) {
-            if(this.currentId.equals(getString(R.string.main))) {
-                loadByCompass(MAIN_URL);
-            }
-            if(this.currentId.equals(getString(R.string.russia))) {
-                loadByCompass(COMPASS_RUSSIA);
-            }
-            if(this.currentId.equals(getString(R.string.novorossia))) {
-                loadByCompass(COMPASS_NOVOROSSIA);
-            }
-            if(this.currentId.equals(getString(R.string.minorrussia))) {
-                loadByCompass(COMPASS_MINOR);
-            }
-            if(this.currentId.equals(getString(R.string.westrussia))) {
-                loadByCompass(COMPASS_WEST);
-            }
-            if(this.currentId.equals(getString(R.string.nearabroad))) {
-                loadByCompass(COMPASS_NEAR);
-            }
-            if(this.currentId.equals(getString(R.string.europe))) {
-                loadByCompass(COMPASS_EUROPE);
-            }
-            if(this.currentId.equals(getString(R.string.usa))) {
-                loadByCompass(COMPASS_USA);
-            }
-            if(this.currentId.equals(getString(R.string.asia))) {
-                loadByCompass(COMPASS_ASIA);
-            }
-            if(this.currentId.equals(getString(R.string.greatermiddleeast))) {
-                loadByCompass(COMPASS_MIDDLEEAST);
-            }
-            if(this.currentId.equals(getString(R.string.world))) {
-                loadByCompass(COMPASS_WORLD);
-            }
+            loadByCompass(currentUrl);
         }
     }
 
@@ -295,6 +270,8 @@ public class MainActivity extends AppCompatActivity {
     {
         private ArrayList<String> imageLinks;
         private ArrayList<String> links;
+        private ArrayList<String> menuHeaders;
+        private ArrayList<String> menuLinks;
         private String url;
 
         @Override
@@ -305,15 +282,31 @@ public class MainActivity extends AppCompatActivity {
                 Connection con = Jsoup.connect(url);
                 Document doc = con.get();
                 Elements imageElements = doc.select(".item-thumbnail img");
+                Elements menuElements = doc.select(".menu-item a");
+                Elements linksObjects = doc.select(".item-title > a");
+
                 imageLinks = new ArrayList<>();
                 links = new ArrayList<>();
+                menuHeaders = new ArrayList<>();
+                menuHeaders.add(0, "Главная");
+                menuLinks = new ArrayList<>();
+                menuLinks.add(0, MAIN_URL);
+
                 for (int i =0; i < imageElements.size(); i++) {
 
                     Element image = imageElements.get(i);
                     String imageId = image.attr("src");
                     imageLinks.add(imageId);
                 }
-                Elements linksObjects = doc.select(".item-title > a");
+
+                for(int i = 0; i < menuElements.size(); i++) {
+                    Element menuItem = menuElements.get(i);
+                    String header = menuItem.text();
+                    String url = menuItem.attr("href");
+                    menuHeaders.add(i + 1, header);
+                    menuLinks.add(i + 1, url);
+                }
+
                 for(Element currentLink : linksObjects) {
                     String link = currentLink.attr("href");
                     links.add(link);
@@ -353,11 +346,17 @@ public class MainActivity extends AppCompatActivity {
             prefsEditor.putString(IMAGES_LINKS, imagesLinksJson);
             String linksJson = gson.toJson(links);
             prefsEditor.putString(URL_LINKS, linksJson);
+            String headersJson = gson.toJson(menuHeaders);
+            prefsEditor.putString(MENU_HEADERS, headersJson);
+            String menulinksJson = gson.toJson(menuLinks);
+            prefsEditor.putString(MENU_LINKS, menulinksJson);
+            createMainMenu(menuHeaders, menuLinks);
             prefsEditor.commit();
 
             mIsLoadingInProgress = false;
         }
     }
+
 
     private void loadImages(ArrayList imageLinks, ArrayList links) {
         try {
