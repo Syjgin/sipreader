@@ -21,6 +21,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Space;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences mPrefs;
     private ProgressBar mProgressbar;
     private boolean isMainMenuCreated;
+    private int additionalHeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
+            mToolbar.measure(0,0);
+            additionalHeight = mToolbar.getMeasuredHeight();
             isMainMenuCreated =false;
 
             mSlider = new SlidingMenu(this);
@@ -381,6 +385,7 @@ public class MainActivity extends AppCompatActivity {
 
     static class ViewHolder {
         ImageView imageView;
+
     }
 
     private class ArticlesAdapter extends ArrayAdapter<String> {
@@ -417,6 +422,8 @@ public class MainActivity extends AppCompatActivity {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.articles_list_item, parent, false);
                 viewHolder = new ViewHolder();
                 viewHolder.imageView = (ImageView)convertView.findViewById(R.id.image);
+                Space space = (Space)convertView.findViewById(R.id.space);
+                space.setMinimumHeight(additionalHeight);
                 convertView.setTag(viewHolder);
             } else {
                 viewHolder = (ViewHolder)convertView.getTag();
