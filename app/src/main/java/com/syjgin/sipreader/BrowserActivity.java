@@ -1,11 +1,14 @@
 package com.syjgin.sipreader;
 
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -20,10 +23,18 @@ public class BrowserActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-
             setContentView(R.layout.activity_browser);
             String url = PROTOCOL + getIntent().getData().getHost() + getIntent().getData().getPath();
             WebView view = (WebView)findViewById(R.id.webView);
+
+            PackageManager m = getPackageManager();
+            String cachePath = getPackageName();
+            PackageInfo p = m.getPackageInfo(cachePath, 0);
+            cachePath = p.applicationInfo.dataDir + "/cache";
+            view.getSettings().setAppCachePath(cachePath);
+            view.getSettings().setAppCacheEnabled(true);
+            view.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+
             mProgressBar = (ProgressBar) findViewById(R.id.ProgressBar);
             mProgressBar.setMax(100);
             mProgressBar.setProgress(0);
