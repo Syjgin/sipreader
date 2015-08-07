@@ -9,4 +9,8 @@
     <string name="title_activity_browser">Browser</string>
     <string name="no_connection">No connection. Please enable Wifi or mobile networking</string>
     <string name="connection_error">Document reading error. Please try again later</string>
+    <string name="password_setting_title">Tinypass account</string>
+    <string name="tinypass_login">Login:</string>
+    <string name="tinypass_password">Password:</string>
+    <string name="title_activity_settings">Settings</string>
 </resources>

@@ -9,5 +9,5 @@
     android:headerDividersEnabled="false"
     android:choiceMode="singleChoice"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@color/background_material_dark">
+    android:background="@color/ColorPrimary">
 </ListView>

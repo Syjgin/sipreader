@@ -171,11 +171,13 @@ public class MainActivity extends AppCompatActivity {
     private void createMainMenu(List<String> headers, ArrayList<String> urls) {
         if(isMainMenuCreated)
             return;
-        isMainMenuCreated = true;
         CompassSelectAdapter listValues = new CompassSelectAdapter(this, R.layout.sidemenu_item, headers, urls);
 
         ListView listView = ((ListView) findViewById(R.id.sidemenu));
-        listView.setAdapter(listValues);
+        if(headers != null && urls != null) {
+            listView.setAdapter(listValues);
+            isMainMenuCreated = true;
+        }
     }
 
     @Override
@@ -194,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+                startActivityForResult(new Intent(MainActivity.this, SettingsActivity.class), 0);
             return true;
         }
 

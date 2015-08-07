@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/password_setting_title"
+        android:key="tinypass_settings">
+        <com.syjgin.sipreader.EditTextPreference android:key="@string/tinypass_login" android:title="@string/tinypass_login">
+        </com.syjgin.sipreader.EditTextPreference>
+        <com.syjgin.sipreader.PasswordTextPreference android:key="@string/tinypass_password" android:title="@string/tinypass_password" android:password="true">
+        </com.syjgin.sipreader.PasswordTextPreference>
+    </PreferenceCategory>
+</PreferenceScreen>
